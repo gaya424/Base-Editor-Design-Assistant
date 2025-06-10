@@ -2,7 +2,7 @@
 
 A Python tool to help researchers design efficient and precise **CRISPR base-editing** experiments, supporting cytosine and adenine base editors such as BE4max and ABE8e.
 
-## 🚀 What does this project do?
+## What does this project do?
 
 This tool assists in designing single-guide RNAs (sgRNAs) for **base-editing applications** (C→T or A→G conversions), ensuring that the target base falls within the editable window of a selected base editor.
 
@@ -62,5 +62,37 @@ This is ideal for researchers aiming to:
 ```bash
 git clone https://github.com/yourusername/Base-Editor-Design-Assistant.git
 cd Base-Editor-Design-Assistant
+```
 
 ### 2. Install dependencies
+```bash
+pip install -r requirements.txt
+```
+### 3. Run the tool
+```bash
+python base_editor.py --input target_sequence.fasta --edit C123T --editor be4max --pam NGG
+```
+---
+
+## Example usage
+```bash
+python base_editor.py \
+  --input examples/gene_region.fasta \
+  --edit A256G \
+  --editor abe8e \
+  --pam NGG \
+  --output results/
+```
+
+---
+
+## Editors supported
+| Name      | Edit type | Editable window | PAM |
+| --------- | --------- | --------------- | --- |
+| BE4max    | C→T       | positions 4–8   | NGG |
+| ABE8e     | A→G       | positions 4–7   | NGG |
+| SpCas9-NG | C/A edits | broader PAMs    | NG  |
+
+---
+
+This project was written as part of the WIS Python Course – March 2025.
