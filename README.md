@@ -95,4 +95,4 @@ python base_editor.py \
 
 ---
 
-This project was written as part of the WIS Python Course – March 2025.
+This project was written as part of the [WIS Python Course – March 2025](https://github.com/code-Maven/wis-python-course-2025-03).
