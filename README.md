@@ -71,7 +71,7 @@ pip install -r requirements.txt
 ```
 ### 3. Run the tool
 ```bash
-python base_editor.py --input example\sequence.fasta --edit A2821G --editor ABE8e --pam NGG --output results
+python base_editor.py --input examples\sequence.fasta --edit A2821G --editor ABE8e --pam NGG --output results
 ```
 ---
 
