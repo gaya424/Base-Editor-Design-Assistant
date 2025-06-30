@@ -31,7 +31,7 @@ This is ideal for researchers aiming to:
 ### Output:
 - List of candidate sgRNAs with:
   - Editable window alignment
-  - Predicted on-target efficiency
+  - Predicted on-target efficiency <span style="color: red;"> The code is currently use simple GC content calculation as on-target effciency. Later version could integrate models like Doench '16, Azimuth, or deep learning models .</span>
   - Off-target warning
   - Bystander editing flags
 - Visualizations (PDF/HTML):
@@ -71,21 +71,10 @@ pip install -r requirements.txt
 ```
 ### 3. Run the tool
 ```bash
-python base_editor.py --input target_sequence.fasta --edit C123T --editor be4max --pam NGG
+python base_editor.py --input sequence.fasta --edit C123T --editor be4max --pam NGG
 ```
 ---
 
-## Example usage
-```bash
-python base_editor.py \
-  --input examples/sequence.fasta \
-  --edit A256G \
-  --editor abe8e \
-  --pam NGG \
-  --output results/
-```
-
----
 
 ## Editors supported
 | Name      | Edit type | Editable window | PAM |
