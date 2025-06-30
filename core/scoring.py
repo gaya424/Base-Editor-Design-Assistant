@@ -22,9 +22,6 @@ SgRNACandidate = Dict[str, Any]
 def calculate_on_target_efficiency(sgRNA_sequence: str, editor_name: str) -> float:
     """
     Calculates a placeholder on-target efficiency score for an sgRNA.
-    In a real-world application, this would involve sophisticated predictive models.
-
-    For the MVP, this function returns a dummy score.
     Future improvements could integrate models like Doench '16, Azimuth, or deep learning models.
 
     Args:
@@ -43,7 +40,7 @@ def calculate_on_target_efficiency(sgRNA_sequence: str, editor_name: str) -> flo
 
     gc_count = sgRNA_sequence.count('G') + sgRNA_sequence.count('C')
     # Normalize GC content to a 0-1 scale, then apply a simple transformation.
-    # This is purely illustrative.
+
     gc_content = gc_count / len(sgRNA_sequence)
     
     # A simple, arbitrary scoring logic for demonstration:
