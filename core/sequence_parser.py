@@ -28,42 +28,54 @@ def load_sequence(filepath_or_text: str, file_format: Optional[str] = None) -> S
     print(f"DEBUG: load_sequence received input: '{filepath_or_text}'")
     print(f"DEBUG: Current working directory: {os.getcwd()}")
     
-    # Check if the input is a file path
+    # Determine if the input string is likely a file path based on its content (extension)
+    # This helps distinguish between "my_sequence.fasta" (intended file) and "ATGC" (plain sequence)
+    looks_like_file_by_extension = False
+    ext = os.path.splitext(filepath_or_text)[1].lower()
+    if ext in ('.fasta', '.fna', '.fa', '.gb', '.gbk'):
+        looks_like_file_by_extension = True
+
+    # 1. Check if the input is an existing file path
     if os.path.exists(filepath_or_text):
         print(f"DEBUG: '{filepath_or_text}' exists. Attempting to load as a file.")
         try:
             # If no format is provided, try to guess from the extension
             if file_format is None:
-                ext = os.path.splitext(filepath_or_text)[1].lower()
-                if ext in ('.fasta', '.fna', '.fa'):
-                    file_format = 'fasta'
-                elif ext in ('.gb', '.gbk'):
-                    file_format = 'genbank'
+                # If it exists and has a common sequence file extension, use that.
+                if looks_like_file_by_extension:
+                    file_format = ext.lstrip('.') # Remove leading dot
+                    # Special handling for .fna, .fa which are fasta
+                    if file_format in ('fna', 'fa'):
+                        file_format = 'fasta'
                 else:
-                    # If it's a file but extension is unknown, try fasta as a common fallback
-                    print(f"DEBUG: Unknown file extension '{ext}'. Trying 'fasta' as default format.")
-                    file_format = 'fasta' # Try fasta as a default if extension is ambiguous but file exists
+                    # If it's an existing file but doesn't have a known sequence extension,
+                    # we can't auto-detect. Raise an error or try a default like 'fasta'.
+                    # For now, let's assume it should have a recognizable extension if it's a file.
+                    raise ValueError(f"Could not determine file format for existing file '{filepath_or_text}'. Please specify format ('fasta' or 'genbank').")
 
             # Use Biopython's SeqIO to parse the file
             with open(filepath_or_text, "r") as handle:
-                # SeqIO.parse returns an iterator, we take the first record
-                # This is suitable for single-record files.
-                # If a file has multiple records, you'd need to decide how to handle them.
                 record = next(SeqIO.parse(handle, file_format))
                 print(f"DEBUG: Successfully parsed file as '{file_format}'.")
                 return record
-        except FileNotFoundError as e: # This should ideally be caught by os.path.exists, but good to keep
-            raise FileNotFoundError(f"Error: Sequence file not found at '{filepath_or_text}'.") from e
         except StopIteration:
             raise ValueError(f"Error: No sequence records found in file '{filepath_or_text}' with format '{file_format}'. Is the file empty or malformed?")
         except ValueError as e:
+            # Catch Biopython's parsing errors specifically
             raise ValueError(f"Error parsing file '{filepath_or_text}' as '{file_format}'. It may be malformed or the format is incorrect. Details: {e}")
         except Exception as e:
             raise IOError(f"An unexpected error occurred while reading the file: {e}")
             
-    # If it's not a file path, treat it as a plain sequence string
+    # 2. If it's not an *existing* file path, decide if it was *intended* to be a file.
+    elif file_format is not None or looks_like_file_by_extension:
+        # If a format was specified, or it looked like a file by extension,
+        # but os.path.exists returned False, then it's a FileNotFoundError.
+        raise FileNotFoundError(f"Error: Sequence file not found at '{filepath_or_text}'.")
+        
+    # 3. If it's not an existing file AND not explicitly intended as a file,
+    # then treat it as a plain sequence string.
     elif filepath_or_text.strip(): # Check if the string is not just whitespace
-        print(f"DEBUG: '{filepath_or_text}' does not exist as a file. Treating as plain text sequence.")
+        print(f"DEBUG: '{filepath_or_text}' does not exist as a file and was not explicitly specified as one. Treating as plain text sequence.")
         # Ensure it only contains valid DNA characters (A, T, C, G, N)
         if not all(base.upper() in 'ATCGN' for base in filepath_or_text):
             raise ValueError("Input string contains characters that are not valid DNA bases (A, T, C, G, N).")
@@ -73,14 +85,24 @@ def load_sequence(filepath_or_text: str, file_format: Optional[str] = None) -> S
         record = SeqRecord(seq_obj, id="plain_sequence", name="plain_sequence")
         return record
         
-    # If input is empty or invalid
+    # 4. If input is empty or invalid
     else:
         raise ValueError("Input is neither a valid file path nor a non-empty sequence string.")
 
 def get_genomic_slice(sequence: Union[Seq, SeqRecord], start: int, end: int) -> Seq:
     """
     Extracts a slice of a DNA sequence from a Seq or SeqRecord object.
-    ... (rest of docstring) ...
+
+    Args:
+        sequence (Union[Seq, SeqRecord]): The input sequence object.
+        start (int): The 1-based start position of the slice (inclusive).
+        end (int): The 1-based end position of the slice (inclusive).
+
+    Returns:
+        Seq: A Biopython Seq object representing the extracted slice.
+
+    Raises:
+        ValueError: If the start or end coordinates are invalid (e.g., out of bounds).
     """
     # 1. Get the sequence object from SeqRecord if needed
     if isinstance(sequence, SeqRecord):
@@ -104,62 +126,3 @@ def get_genomic_slice(sequence: Union[Seq, SeqRecord], start: int, end: int) -> 
     # 3. Return the slice
     return seq_obj[slice_start:slice_end]
 
-if __name__ == '__main__':
-    # --- Example Usage ---
-    print("--- Testing sequence_parser.py ---")
-
-    # Example 1: Load from a plain text sequence
-    plain_seq_text = "ATGCGTAGCTAGCTAGCTAGCTAGCTAGCTAGCTAGCTAGCTAGCTAGC"
-    print(f"\n1. Loading from plain text: '{plain_seq_text[:15]}...'")
-    try:
-        seq_record_plain = load_sequence(plain_seq_text)
-        print(f"   Success! ID: {seq_record_plain.id}, Length: {len(seq_record_plain.seq)}")
-        print(f"   Sequence: {seq_record_plain.seq}")
-    except Exception as e:
-        print(f"   Failed: {e}")
-
-    # Example 2: Create a dummy FASTA file for testing
-    dummy_fasta_content = ">test_gene_A\nATGCATGCATGCATGC\n>test_gene_B\nCGATCGATCGATCGAT"
-    dummy_fasta_path = "dummy_test.fasta"
-    with open(dummy_fasta_path, "w") as f:
-        f.write(dummy_fasta_content)
-    
-    print(f"\n2. Loading from a FASTA file: '{dummy_fasta_path}'")
-    try:
-        # Note: SeqIO.parse will only give the first record for a multi-record file
-        seq_record_fasta = load_sequence(dummy_fasta_path)
-        print(f"   Success! ID: {seq_record_fasta.id}, Description: {seq_record_fasta.description}")
-        print(f"   Sequence: {seq_record_fasta.seq}")
-    except Exception as e:
-        print(f"   Failed: {e}")
-        
-    # Example 3: Test with a non-existent file
-    print("\n3. Testing with a non-existent file: 'non_existent.fasta'")
-    try:
-        load_sequence("non_existent.fasta")
-    except FileNotFoundError as e:
-        print(f"   Caught expected error: {e}")
-    except Exception as e:
-        print(f"   Failed with unexpected error: {e}")
-        
-    # Example 4: Test getting a slice from the loaded sequence
-    print("\n4. Getting a slice of the sequence from the FASTA file (positions 5 to 10)")
-    try:
-        # The sequence is ATGCATGCATGCATGC
-        # 1-based positions 5 to 10 are: 'ATGCAT'
-        seq_slice = get_genomic_slice(seq_record_fasta, 5, 10)
-        print(f"   Success! Extracted slice: {seq_slice}")
-    except Exception as e:
-        print(f"   Failed: {e}")
-        
-    # Example 5: Test invalid coordinates for slicing
-    print("\n5. Testing slice with invalid coordinates (start > end)")
-    try:
-        get_genomic_slice(seq_record_fasta, 10, 5)
-    except ValueError as e:
-        print(f"   Caught expected error: {e}")
-
-    # Clean up the dummy file
-    if os.path.exists(dummy_fasta_path):
-        os.remove(dummy_fasta_path)
-        print(f"\nCleaned up {dummy_fasta_path}")

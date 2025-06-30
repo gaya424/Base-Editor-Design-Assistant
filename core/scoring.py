@@ -56,7 +56,8 @@ def identify_bystander_edits(
     """
     Identifies potential bystander edits within the editable window of an sgRNA.
     Bystander edits occur when other bases of the target type (e.g., 'C' for BE4max, 'A' for ABE8e)
-    are present in the editable window besides the primary target base.
+    are present in the editable window besides the primary target_base_relative_pos.
+    The primary target itself is NOT considered a bystander edit.
 
     Args:
         sgRNA_info (SgRNACandidate): A dictionary containing sgRNA candidate information,
@@ -98,6 +99,7 @@ def identify_bystander_edits(
         # Ensure the relative position is within the bounds of the protospacer sequence
         if 0 <= relative_pos < len(protospacer_sequence):
             # Check if this position is not the primary target base
+            # A bystander edit is an editable base *other than* the primary target in the window.
             if relative_pos != primary_target_relative_pos:
                 base_at_pos = protospacer_sequence[relative_pos].upper()
                 
@@ -148,151 +150,3 @@ def check_pam_blocking_mutation(
     
     return False
 
-if __name__ == '__main__':
-    # --- Example Usage for scoring.py ---
-    print("--- Testing scoring.py ---")
-
-    # Dummy editor spec for testing (should match editor_specs.py)
-    test_editor_specs = {
-        "be4max": {
-            "description": "BE4max (Cytosine Base Editor)",
-            "editable_window_start": 4,
-            "editable_window_end": 8,
-            "pam_sequence": "NGG",
-            "edit_type": "C_TO_T"
-        },
-        "abe8e": {
-            "description": "ABE8e (Adenine Base Editor)",
-            "editable_window_start": 5,
-            "editable_window_end": 9,
-            "pam_sequence": "NGG",
-            "edit_type": "A_TO_G"
-        },
-        "spcas9-ng": {
-            "description": "SpCas9-NG (Broader PAM CBE - Hypothetical)",
-            "editable_window_start": 4,
-            "editable_window_end": 8,
-            "pam_sequence": "NG",
-            "edit_type": "C_TO_T"
-        },
-    }
-
-    # Helper function to get editor spec for tests
-    def get_test_editor_spec(name):
-        return test_editor_specs.get(name.lower())
-
-    # --- Test Case 1: calculate_on_target_efficiency ---
-    print("\n--- Test Case 1: calculate_on_target_efficiency ---")
-    seq_high_gc = "GCGCGCGCGCGCGCGCGCGC" # 20bp, 100% GC
-    seq_low_gc = "ATATATATATATATATATAT"   # 20bp, 0% GC
-    seq_mixed_gc = "ATGCATGCATGCATGCATGC" # 20bp, 50% GC
-
-    score_high = calculate_on_target_efficiency(seq_high_gc, "BE4max")
-    score_low = calculate_on_target_efficiency(seq_low_gc, "ABE8e")
-    score_mixed = calculate_on_target_efficiency(seq_mixed_gc, "BE4max")
-
-    print(f"  Score for '{seq_high_gc}': {score_high}")
-    print(f"  Score for '{seq_low_gc}': {score_low}")
-    print(f"  Score for '{seq_mixed_gc}': {score_mixed}")
-    print("  (Note: Scores are placeholders and based on simple GC content for demonstration)")
-
-    # --- Test Case 2: identify_bystander_edits (BE4max, C->T) ---
-    print("\n--- Test Case 2: identify_bystander_edits (BE4max, C->T) ---")
-    # Protospacer: ATGCATGCACGTGCATGCATGC (C at 0-idx 9 is target)
-    # Editable window (4-8): C at 4, C at 6, G at 7, C at 8
-    # Target is C at 9. So, C at 4, C at 6, C at 8 are potential bystanders.
-    sgRNA_info_be4max: SgRNACandidate = {
-        "sequence": "ATGCATGCACGTGCATGCATGC", # Length 22, for example, assuming longer seq for illustration
-        "genomic_start": 100,
-        "genomic_end": 119,
-        "pam_sequence": "NGG",
-        "pam_start": 120,
-        "pam_end": 122,
-        "target_base_relative_pos": 9, # C at 0-indexed 9
-        "strand": 1,
-        "original_target_base": "C"
-    }
-    # Adjust sequence to be 20bp for consistency with typical sgRNA_length
-    sgRNA_info_be4max["sequence"] = "ATGCATGCACGTGCATGCAT" # 20bp
-    sgRNA_info_be4max["target_base_relative_pos"] = 9 # C at 0-indexed 9
-
-    editor_spec_be4max = get_test_editor_spec("BE4max")
-    bystanders_be4max = identify_bystander_edits(sgRNA_info_be4max, editor_spec_be4max)
-
-    print(f"  Protospacer: {sgRNA_info_be4max['sequence']}")
-    print(f"  Target C at relative pos: {sgRNA_info_be4max['target_base_relative_pos']}")
-    print(f"  BE4max window: {editor_spec_be4max['editable_window_start']}-{editor_spec_be4max['editable_window_end']}")
-    print(f"  Bystander edits found ({len(bystanders_be4max)}):")
-    if bystanders_be4max:
-        for b in bystanders_be4max:
-            print(f"    - Base: {b['base']}, Relative Pos: {b['relative_pos']}, Genomic Pos: {b['genomic_pos']}")
-    else:
-        print("    None.")
-
-    # --- Test Case 3: identify_bystander_edits (ABE8e, A->G) ---
-    print("\n--- Test Case 3: identify_bystander_edits (ABE8e, A->G) ---")
-    # Protospacer: GGGGGAGGGGAGGGGAGGGG (A at 0-idx 5 is target)
-    # Editable window (5-9): A at 5, G at 6, G at 7, G at 8, G at 9
-    # Target is A at 5. No other A's in window (5-9).
-    sgRNA_info_abe8e: SgRNACandidate = {
-        "sequence": "GGGGGAGGGGAGGGGAGGGG", # 20bp
-        "genomic_start": 200,
-        "genomic_end": 219,
-        "pam_sequence": "NGG",
-        "pam_start": 220,
-        "pam_end": 222,
-        "target_base_relative_pos": 5, # A at 0-indexed 5
-        "strand": 1,
-        "original_target_base": "A"
-    }
-    editor_spec_abe8e = get_test_editor_spec("ABE8e")
-    bystanders_abe8e = identify_bystander_edits(sgRNA_info_abe8e, editor_spec_abe8e)
-
-    print(f"  Protospacer: {sgRNA_info_abe8e['sequence']}")
-    print(f"  Target A at relative pos: {sgRNA_info_abe8e['target_base_relative_pos']}")
-    print(f"  ABE8e window: {editor_spec_abe8e['editable_window_start']}-{editor_spec_abe8e['editable_window_end']}")
-    print(f"  Bystander edits found ({len(bystanders_abe8e)}):")
-    if bystanders_abe8e:
-        for b in bystanders_abe8e:
-            print(f"    - Base: {b['base']}, Relative Pos: {b['relative_pos']}, Genomic Pos: {b['genomic_pos']}")
-    else:
-        print("    None.")
-
-    # --- Test Case 4: check_pam_blocking_mutation (No blocking) ---
-    print("\n--- Test Case 4: check_pam_blocking_mutation (No blocking) ---")
-    # sgRNA length 20. PAM starts at relative pos 20.
-    # Target at relative pos 9 (well before PAM).
-    sgRNA_info_no_block: SgRNACandidate = {
-        "sequence": "ATGCATGCACGTGCATGCAT", # 20bp
-        "genomic_start": 100,
-        "genomic_end": 119,
-        "pam_sequence": "NGG",
-        "pam_start": 120,
-        "pam_end": 122,
-        "target_base_relative_pos": 9, # C at 0-indexed 9
-        "strand": 1,
-        "original_target_base": "C"
-    }
-    editor_spec_be4max_for_pam = get_test_editor_spec("BE4max")
-    is_blocking_no = check_pam_blocking_mutation(sgRNA_info_no_block, editor_spec_be4max_for_pam)
-    print(f"  Target at relative pos {sgRNA_info_no_block['target_base_relative_pos']}. PAM starts at relative pos {len(sgRNA_info_no_block['sequence'])}.")
-    print(f"  Is PAM blocking mutation? {is_blocking_no} (Expected: False)")
-
-    # --- Test Case 5: check_pam_blocking_mutation (Blocking) ---
-    print("\n--- Test Case 5: check_pam_blocking_mutation (Blocking) ---")
-    # Target at relative pos 20 (which is the start of PAM for 20bp guide).
-    sgRNA_info_block: SgRNACandidate = {
-        "sequence": "ATGCATGCATGCATGCATGC", # 20bp
-        "genomic_start": 300,
-        "genomic_end": 319,
-        "pam_sequence": "NGG",
-        "pam_start": 320,
-        "pam_end": 322,
-        "target_base_relative_pos": 20, # Hypothetically, if target falls on 1st base of PAM
-        "strand": 1,
-        "original_target_base": "G" # Example, could be any base in PAM
-    }
-    editor_spec_be4max_for_pam_block = get_test_editor_spec("BE4max")
-    is_blocking_yes = check_pam_blocking_mutation(sgRNA_info_block, editor_spec_be4max_for_pam_block)
-    print(f"  Target at relative pos {sgRNA_info_block['target_base_relative_pos']}. PAM starts at relative pos {len(sgRNA_info_block['sequence'])}.")
-    print(f"  Is PAM blocking mutation? {is_blocking_yes} (Expected: True)")
