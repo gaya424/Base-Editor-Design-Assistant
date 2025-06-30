@@ -51,8 +51,7 @@ This is ideal for researchers aiming to:
 - **Libraries used**:
   - `Biopython` for sequence handling
   - `pandas` for data processing
-  - `Plotly` or `Matplotlib` for plotting
-  - (Optional) `CRISPRitz`/`Cas-OFFinder` integration for off-targets
+  - `Plotly` for plotting
 
 - Modular design: base editor specs, scoring functions, and visualization logic are separated for extensibility.
 
