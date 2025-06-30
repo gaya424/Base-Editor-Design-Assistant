@@ -31,7 +31,7 @@ This is ideal for researchers aiming to:
 ### Output:
 - List of candidate sgRNAs with:
   - Editable window alignment
-  - Predicted on-target efficiency <span style="color: red;"> The code is currently use simple GC content calculation as on-target effciency. Later version could integrate models like Doench '16, Azimuth, or deep learning models .</span>
+  - Predicted on-target efficiency. **Currently based on a very simple GC content calculation, future improvements could integrate models like Doench '16, Azimuth, or deep learning models**
   - Off-target warning
   - Bystander editing flags
 - Visualizations (PDF/HTML):
