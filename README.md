@@ -78,7 +78,7 @@ python base_editor.py --input target_sequence.fasta --edit C123T --editor be4max
 ## Example usage
 ```bash
 python base_editor.py \
-  --input examples/gene_region.fasta \
+  --input examples/sequence.fasta \
   --edit A256G \
   --editor abe8e \
   --pam NGG \
