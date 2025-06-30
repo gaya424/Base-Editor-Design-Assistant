@@ -31,6 +31,7 @@ This is ideal for researchers aiming to:
 ### Output:
 - List of candidate sgRNAs with:
   - Editable window alignment
+    ![Base Editor Design Output](images/plot_example.png "A screenshot showing the sgRNA visualization")
   - Predicted on-target efficiency
   - Off-target warning
   - Bystander editing flags
@@ -91,7 +92,8 @@ python base_editor.py \
 | --------- | --------- | --------------- | --- |
 | BE4max    | C→T       | positions 4–8   | NGG |
 | ABE8e     | A→G       | positions 4–7   | NGG |
-| SpCas9-NG | C/A edits | broader PAMs    | NG  |
+
+*Future version could support more editors.
 
 ---
 
