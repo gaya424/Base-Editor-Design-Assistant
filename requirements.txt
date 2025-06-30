@@ -1,0 +1,5 @@
+biopython
+pandas
+plotly # Or matplotlib
+# For command-line argument parsing
+argparse

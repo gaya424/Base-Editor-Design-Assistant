@@ -1,0 +1,2 @@
+rank,sequence,on_target_efficiency,is_compatible,original_target_base,target_base_relative_pos,bystander_edits,pam_blocking_mutation,off_target_warnings,pam_sequence,genomic_start,genomic_end,pam_start,pam_end,strand
+1,CTAAGGGAGTTCACTGCCAC,0.54,True,A,5,"[{'base': 'A', 'relative_pos': 7, 'genomic_pos': 2822, 'strand': -1}]",False,,CGG,2815,2834,2812,2814,-1
