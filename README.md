@@ -31,12 +31,12 @@ This is ideal for researchers aiming to:
 ### Output:
 - List of candidate sgRNAs with:
   - Editable window alignment
-    ![Base Editor Design Output](images/plot_example.png "A screenshot showing the sgRNA visualization")
   - Predicted on-target efficiency
   - Off-target warning
   - Bystander editing flags
 - Visualizations (PDF/HTML):
   - Editable windows and base alignment
+    ![Base Editor Design Output](images/plot_example.png "A screenshot showing the sgRNA visualization")
 - Summary statistics:
   - GC content
   - Guide rankings
